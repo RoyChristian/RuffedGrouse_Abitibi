@@ -1,0 +1,50 @@
+model{
+  
+  #intercept
+  alpha0 ~ dnorm(0, 0.01)
+  
+  ###alpha
+  hyper.alpha1 ~ dnorm(0,25)
+  eta.alpha1 ~ dgamma(0.5,0.5) 
+  sd.alpha1 <- abs(hyper.alpha1)/sqrt(eta.alpha1)
+  tau.alpha1 <- pow(sd.alpha1,-2)
+  for(i in 1:Stades){
+    alpha1[i]~ dnorm(0,tau.alpha1)
+  }
+  
+  hyper.alpha2 ~ dnorm(0,25)
+  eta.alpha2 ~ dgamma(0.5,0.5) 
+  sd.alpha2 <- abs(hyper.alpha2)/sqrt(eta.alpha2)
+  tau.alpha2 <- pow(sd.alpha2,-2)
+  for(i in 1:Class){
+    alpha2[i]~ dnorm(0,tau.alpha2)
+  }
+  
+  hyper.int ~ dnorm(0,25)
+  eta.int ~ dgamma(0.5,0.5) 
+  sd.int <- abs(hyper.int)/sqrt(eta.int)
+  tau.int  <- pow(sd.int,-2)
+  for(i in 1:Stades){
+    for(j in 1:Class){
+      alpha.int[i,j] ~ dnorm(0,tau.int)
+  }}
+
+  for ( i in 1:Ncells ) {
+    Y[i] ~ dpois(lambda[i])
+    lambda[i] <- exp(alpha0 + alpha1[x1[i]] + alpha2[x2[i]] + alpha.int[x1[i],x2[i]])
+  }
+
+  # Convert to sum-to-zero:
+  for (i in 1:Stades){ 
+    for (j in 1:Class){
+      m[i,j] <- alpha0 + alpha1[i] + alpha2[j] + alpha.int[i,j]
+  }}
+  b0 <- mean(m[1:Stades,1:Class])
+  for (i in 1:Stades) {b1[i] <- mean(m[i,1:Class] ) - b0}
+  for (j in 1:Class) {b2[j] <- mean(m[1:Stades,j] ) - b0}
+  for (i in 1:Stades){ 
+    for (j in 1:Class){
+    beta.int[i,j] <- m[i,j] - (b0 + b1[i] + b2[j])
+  }}
+#end 
+}

@@ -1,0 +1,81 @@
+model{
+
+#####Abundance  
+#Half-cauchy prior for beta
+  tau.beta <- pow(sd.beta,-2)*(1+sum(w.beta))
+  sd.beta <- abs(hyper.beta)/sqrt(eta.beta)
+  hyper.beta ~ dnorm(0,25)
+  eta.beta ~ dgamma(0.5,0.5) 
+  
+  for (j in 1:ncov){
+    Beta[j] ~ dnorm(0,tau.beta)
+  }
+
+  #Intercept abundance
+  Beta0 ~ dnorm(0, tau.beta)
+  
+  #Prior for omega
+  Ind.beta[1] ~ dbern(0.5)
+  Ind.beta[2] ~ dbern(2/3)
+  Ind.beta[3] ~ dbern(2/3)
+  Ind.beta[4] ~ dbern(0.5)
+  Ind.beta[5] ~ dbern(0.5)
+  
+  #omega for beta
+  w.beta[1] <-  Ind.beta[1]
+  w.beta[2] <-  Ind.beta[2]
+  w.beta[3] <-  Ind.beta[3]
+  w.beta[4] <-  Ind.beta[2]*Ind.beta[4]
+  w.beta[5] <-  Ind.beta[3]*Ind.beta[5]
+  
+  ### Abduncance likelihood
+  for (i in 1:nobs){
+    log.lambda[i] <- Beta0 + X[i,] %*% (Beta[]*w.beta[])  + log.area[i]
+    N[i] ~ dpois(lambda[i]) 
+    lambda[i]<- exp(log.lambda[i])
+  }
+  
+  #####Detection
+  # uniform prior for detection
+  T.alpha ~ dgamma(3.29,7.8)            #Uniform prior on the logit scale Link and Barker 2010 page 154
+  tau.alpha <- T.alpha*(1+sum(w.alpha))
+  sd.alpha <- sqrt(tau.alpha^-1)
+  
+  for (j in 1:dncov){
+    Alpha[j] ~ dnorm(0,tau.alpha)
+  }
+  # Intercept detection
+  Alpha0 ~ dnorm(0,tau.alpha)
+  #Prior for omega  
+  Ind.alpha[1] ~ dbern(2/3)
+  Ind.alpha[2] ~ dbern(2/3)
+  Ind.alpha[3] ~ dbern(0.5)
+  Ind.alpha[4] ~ dbern(0.5)
+  
+ #Omega for alpha
+  w.alpha[1] <-  Ind.alpha[1]
+  w.alpha[2] <-  Ind.alpha[2]
+  w.alpha[3] <-  Ind.alpha[1]*Ind.alpha[2]
+  w.alpha[4] <-  Ind.alpha[2]*Ind.alpha[4]
+
+  #detection likelihood
+  for(i in 1:nobs){
+    for(j in 1:nvisits){
+      Y[i,j] ~ dbin(phi[i,j], N[i])
+      logit(phi[i,j]) <- logit.phi[i,j]
+      logit.phi[i,j] <- Alpha0 +  W[i,,j] %*% (Alpha[]*w.alpha[])
+  }}
+ 
+  ######Bayesian P-value
+  #for(i in 1:nobs){
+  #  for(j in 1:nvisits){
+  #   ###Observed 
+  #  eval[i,j] <-  phi[i,j]*N[i]
+  #   E[i,j] <- pow((Y[i,j] - eval[i,j]),2)/(eval[i,j]+0.5)
+  #   ###Predicted
+  #   Y.pred[i,j] ~ dbin(phi[i,j], N[i]) 
+  #   E.pred[i,j] <- pow((Y.pred[i,j] - eval[i,j]),2)/(eval[i,j]+0.5)
+  #}}  
+  #fit <- sum(E[,])
+  #fit.pred <- sum(E.pred[,])
+}

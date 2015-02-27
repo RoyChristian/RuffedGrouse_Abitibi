@@ -1,0 +1,23 @@
+model{
+  #priors on scale
+  phi ~ dgamma(0.1,0.1)
+
+  for(i in 1:nbeta){
+    Beta[i] ~ dnorm(0,0.01)
+  }
+
+  for(i in 1:nobs) {
+      Y[i] ~ dbeta(p[i], q[i])
+      p[i] <- mu[i] * phi
+      q[i]  <- (1-mu[i]) * phi
+      logit(mu[i]) <- X[i,]%*%Beta[]
+  }
+  
+  beta[1] <- Beta[1] 
+  beta[2] <- Beta[1] + Beta[3]
+  beta[3] <- Beta[1] + Beta[4]
+  beta[4] <- Beta[1] + Beta[2]
+  beta[5] <- Beta[1] + Beta[2] + Beta[3] + Beta[5]
+  beta[6] <- Beta[1] + Beta[2] + Beta[4] + Beta[6]
+        
+}
